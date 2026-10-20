@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- 
+    O que este bloco faz?
+    Define meta tags essenciais, responsividade móvel e tipografia Inter.
+    
+    Por que foi feito assim?
+    A fonte Inter com pesos 300 a 600 é a referência direta do Mercury Design System,
+    proporcionando alta legibilidade numérica e elegância tipográfica.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stoky — Gestão de Estoque</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;420;480;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=2.0">
+</head>
+<body>
+
+  <!-- 
+    O que este cabeçalho faz?
+    Barra de navegação noturna ("Night World" - #171721) inspirada no Mercury.
+    Reúne a marca, o indicador de conectividade em tempo real e o botão de ação principal.
+    
+    Por que foi feito assim?
+    O Mercury posiciona sua ação prioritária (Action Pill em Índigo #5266eb) diretamente
+    no cabeçalho noturno, garantindo contraste imediato e usabilidade a um clique de distância.
+  -->
+  <header class="mercury-navbar">
+    <div class="navbar-container">
+      <div class="brand">
+        <span class="brand-glyph">✦</span>
+        <span class="brand-name">Stoky <span class="brand-subtitle">Estoque</span></span>
+      </div>
+      <div class="navbar-actions">
+        <span id="api-status-badge" class="badge-status badge-connecting">
+          <span class="status-dot"></span> Conectando...
+        </span>
+        <button 
+          id="btn-abrir-novo-produto" 
+          class="btn-primary" 
+          type="button" 
+          onclick="abrirModal('modal-novo-produto')"
+        >
+          <span class="btn-icon">+</span> Novo Produto
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal (Light World) -->
+  <main class="mercury-main">
+    <div class="content-container">
+
+      <!-- 
+        O que este bloco faz?
+        Console de Liquidez Integrado (Ledger Console).
+        Apresenta o capital total alocado em mercadorias, catálogo e ponto de reposição
+        em uma superfície contínua com divisores sutis em vez de cartões soltos.
+        
+        Por que foi feito assim?
+        Elimina o aspecto genérico de cards isolados e transmite solidez bancária,
+        destacando os dados contábeis com números em peso leve e proporções refinadas.
+      -->
+      <section class="console-hero">
+        <div class="console-card">
+          <div class="console-metric primary-metric">
+            <span class="metric-label">Capital em mercadorias</span>
+            <div id="stat-valor-total" class="metric-value">R$ 0,00</div>
+            <span class="metric-help">Valor total investido no inventário ativo</span>
+          </div>
+
+          <div class="console-divider"></div>
+
+          <div class="console-metric">
+            <span class="metric-label">Itens no catálogo</span>
+            <div id="stat-total-produtos" class="metric-value">0</div>
+            <span class="metric-help">Tipos de produtos cadastrados</span>
+          </div>
+
+          <div class="console-divider"></div>
+
+          <div class="console-metric alert-metric">
+            <span class="metric-label">Ponto de reposição</span>
+            <div id="stat-estoque-baixo" class="metric-value">0</div>
+            <span class="metric-help">Itens com estoque crítico (&lt; 5 un.)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 
+        O que este bloco faz?
+        Barra de Operações:
+        - Abas de alternância rápida entre todo o inventário e itens em alerta.
+        - Campo de busca em tempo real com ícone de pesquisa.
+        
+        Por que foi feito assim?
+        Mantém os comandos de busca e filtro em linha direta com o livro-razão abaixo.
+      -->
+      <section class="ledger-toolbar">
+        <div class="toolbar-filter-group">
+          <div class="segmented-control">
+            <button id="tab-todos" class="tab-pill active" type="button" onclick="definirFiltro('todos')">
+              Todos os itens
+            </button>
+            <button id="tab-criticos" class="tab-pill" type="button" onclick="definirFiltro('criticos')">
+              Estoque crítico (&lt; 5)
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar-search-group">
+          <div class="search-capsule">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="input-busca" 
+              placeholder="Buscar item pelo nome..." 
+              autocomplete="off"
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- 
+        O que este bloco faz?
+        Livro-Razão de Mercadorias (Tabela Operacional Mercury).
+        Exibe cada item com preço, saldo físico, total monetário alocado e ações de movimentação.
+      -->
+      <section class="ledger-table-section">
+        <div class="ledger-card">
+          <table class="mercury-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Ref.</th>
+                <th>Item</th>
+                <th style="width: 150px;">Preço unitário</th>
+                <th style="width: 160px;">Saldo em estoque</th>
+                <th style="width: 170px;">Capital alocado</th>
+                <th style="width: 240px; text-align: right;">Movimentações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-produtos-corpo">
+              <!-- Linhas alimentadas de forma reativa pelo script JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Rodapé Mercury (Night World) -->
+  <footer class="mercury-footer">
+    <div class="footer-container">
+      <p>Stoky — Terminal Financeiro & Controle de Estoque (Estilo Mercury)</p>
+    </div>
+  </footer>
+
+  <!-- 
+    ============================================================================
+    MODAIS DE AÇÃO COM VALIDAÇÃO DEFENSIVA DE LIMITES
+    ============================================================================
+  -->
+
+  <!-- Modal: Cadastro de Novo Produto -->
+  <div id="modal-novo-produto" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Cadastrar Novo Produto</h3>
+        <button class="modal-close" type="button" onclick="fecharModal('modal-novo-produto')">✕</button>
+      </div>
+      <form id="form-novo-produto" onsubmit="submeterNovoProduto(event)">
+        <div class="form-group">
+          <label for="campo-nome">Nome do item</label>
+          <input 
+            type="text" 
+            id="campo-nome" 
+            placeholder="Ex: Teclado Mecânico RGB" 
+            maxlength="100" 
+            required
+          >
+          <small class="form-helper">Máximo 100 caracteres (<span id="contador-nome">0</span>/100)</small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="campo-preco">Preço unitário (R$)</label>
+            <input 
+              type="number" 
+              id="campo-preco" 
+              step="0.01" 
+              min="0.01" 
+              max="9999999.99" 
+              placeholder="0,00" 
+              required
+            >
+            <small class="form-helper">Até R$ 9.999.999,99 (máx. 10 caracteres)</small>
+          </div>
+          <div class="form-group">
+            <label for="campo-quantidade">Estoque inicial</label>
+            <input 
+              type="number" 
+              id="campo-quantidade" 
+              min="0" 
+              max="1000000" 
+              placeholder="0" 
+              required
+            >
+            <small class="form-helper">Até 1.000.000 un. (máx. 7 dígitos)</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="fecharModal('modal-novo-produto')">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar no catálogo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Registrar Entrada de Estoque -->
+  <div id="modal-entrada-estoque" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Registrar Entrada de Estoque</h3>
+        <button class="modal-close" type="button" onclick="fecharModal('modal-entrada-estoque')">✕</button>
+      </div>
+      <form id="form-entrada-estoque" onsubmit="submeterEntradaEstoque(event)">
+        <input type="hidden" id="entrada-produto-id">
+        <div class="product-highlight-box">
+          <span class="highlight-label">Item selecionado</span>
+          <strong id="entrada-produto-nome" class="highlight-name">--</strong>
+          <span class="highlight-info">Saldo atual: <span id="entrada-produto-atual">0</span> un.</span>
+        </div>
+        <div class="form-group">
+          <label for="entrada-quantidade">Quantidade a adicionar</label>
+          <input 
+            type="number" 
+            id="entrada-quantidade" 
+            min="1" 
+            max="1000000" 
+            placeholder="Ex: 10" 
+            required
+          >
+          <small class="form-helper">Até 1.000.000 un. (máx. 7 dígitos)</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="fecharModal('modal-entrada-estoque')">Cancelar</button>
+          <button type="submit" class="btn-primary">Confirmar entrada</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Registrar Venda (Saída) de Estoque -->
+  <div id="modal-venda-estoque" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Registrar Venda / Saída</h3>
+        <button class="modal-close" type="button" onclick="fecharModal('modal-venda-estoque')">✕</button>
+      </div>
+      <form id="form-venda-estoque" onsubmit="submeterVendaEstoque(event)">
+        <input type="hidden" id="venda-produto-id">
+        <div class="product-highlight-box">
+          <span class="highlight-label">Item selecionado</span>
+          <strong id="venda-produto-nome" class="highlight-name">--</strong>
+          <span class="highlight-info">Saldo disponível: <span id="venda-produto-atual">0</span> un.</span>
+        </div>
+        <div class="form-group">
+          <label for="venda-quantidade">Quantidade vendida</label>
+          <input 
+            type="number" 
+            id="venda-quantidade" 
+            min="1" 
+            placeholder="Ex: 2" 
+            required
+          >
+          <small id="helper-venda" class="form-helper">Máx. 7 dígitos (limitado ao estoque disponível)</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="fecharModal('modal-venda-estoque')">Cancelar</button>
+          <button type="submit" class="btn-primary">Confirmar venda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Flutuante -->
+  <div id="toast" class="mercury-toast"></div>
+
+  <!-- Script Principal da Aplicação -->
+  <script src="js/app.js?v=2.0"></script>
+</body>
+</html>

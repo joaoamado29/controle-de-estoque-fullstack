@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches de teste
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Variáveis de ambiente e segredos locais (NUNCA comitar)
+.env
+.env.local
+.env.*.local
+
+# Banco de dados SQLite de desenvolvimento/testes locais
+*.sqlite3
+*.sqlite
+*.db
+
+# Configurações de IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos e pastas internas de agentes e documentação de protótipo
+.agent/
+.agents/
+mercury-model/
+skills-lock.json
+
+# Arquivos do sistema operacional
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
