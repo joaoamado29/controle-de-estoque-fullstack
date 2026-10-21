@@ -165,3 +165,56 @@ async def test_servir_frontend_estatico(client: AsyncClient):
     assert "Stoky" in response.text
     assert "Gestão de Estoque" in response.text
 
+
+@pytest.mark.asyncio
+async def test_produto_com_aspas_e_caracteres_especiais(client: AsyncClient):
+    """
+    O que faz: Testa o ciclo de vida de produtos contendo aspas simples ('), duplas (\") e apóstrofos.
+    Por que assim: Garante que caracteres especiais nos nomes sejam persistidos e excluídos com segurança
+    sem quebrar a API, banco de dados ou renderização.
+    """
+    nome_com_aspas = "Óleo D'Oliveira Extra 500ml \"Premium\""
+    payload = {"nome": nome_com_aspas, "quantidade": 8, "preco": 35.90}
+
+    # 1. Cadastro com aspas simples e duplas
+    res_post = await client.post("/api/produtos/", json=payload)
+    assert res_post.status_code == 201
+    prod = res_post.json()
+    assert prod["nome"] == nome_com_aspas
+    prod_id = prod["id"]
+
+    # 2. Busca e listagem
+    res_list = await client.get("/api/produtos/")
+    assert res_list.status_code == 200
+    nomes = [p["nome"] for p in res_list.json()]
+    assert nome_com_aspas in nomes
+
+    # 3. Exclusão bem sucedida
+    res_del = await client.delete(f"/api/produtos/{prod_id}")
+    assert res_del.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_resistencia_contra_sql_injection(client: AsyncClient):
+    """
+    O que faz: Testa payloads maliciosos de SQL Injection como nomes de produto.
+    Por que assim: Comprova que as consultas parametrizadas do SQLAlchemy tratam o payload
+    estritamente como texto puro (data literal), impedindo injeção de comandos SQL ou quebra de tabela.
+    """
+    payload_sqli = "Robert'); DROP TABLE produtos;--"
+    res = await client.post(
+        "/api/produtos/",
+        json={"nome": payload_sqli, "quantidade": 5, "preco": 10.0}
+    )
+    assert res.status_code == 201
+    prod_id = res.json()["id"]
+
+    # A tabela continua íntegra e o produto com nome malicioso pode ser consultado normalmente
+    res_check = await client.get("/api/produtos/")
+    assert res_check.status_code == 200
+    assert any(p["id"] == prod_id for p in res_check.json())
+
+    # Deleta o produto de teste
+    del_res = await client.delete(f"/api/produtos/{prod_id}")
+    assert del_res.status_code == 204
+

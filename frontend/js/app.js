@@ -310,7 +310,7 @@ function renderizarTabela() {
               type="button" 
               class="btn-table-action btn-table-danger" 
               title="Excluir produto do catálogo"
-              onclick="confirmarExclusao(${produto.id}, '${escapeHtml(produto.nome)}')"
+              onclick="confirmarExclusao(${produto.id})"
             >
               Excluir
             </button>
@@ -540,18 +540,20 @@ async function submeterVendaEstoque(event) {
  * Abre o card modal em HTML para confirmação antes de excluir o produto.
  * 
  * Por que foi feito assim?
- * Substitui o confirm() nativo do navegador por um card estilizado no padrão Mercury,
- * proporcionando uma experiência visual consistente, segura e adaptada para mobile.
+ * Recebe apenas o ID numérico do produto (produtoId) para que caracteres
+ * especiais no nome (como aspas simples, duplas ou símbolos) não quebrem
+ * a sintaxe do JavaScript inline no HTML. Os dados do item são recuperados
+ * com total segurança diretamente do cache em memória.
  */
-function confirmarExclusao(produtoId, nome) {
-  const produto = produtosCache.find(p => p.id === produtoId);
-  const nomeProduto = produto ? produto.nome : nome;
+function confirmarExclusao(produtoId) {
+  const produto = produtosCache.find(p => p.id === Number(produtoId));
+  if (!produto) return;
 
   const inputId = document.getElementById("exclusao-produto-id");
   const elementoNome = document.getElementById("exclusao-produto-nome");
 
-  if (inputId) inputId.value = produtoId;
-  if (elementoNome) elementoNome.textContent = nomeProduto;
+  if (inputId) inputId.value = produto.id;
+  if (elementoNome) elementoNome.textContent = produto.nome;
 
   abrirModal("modal-confirmar-exclusao");
 }
