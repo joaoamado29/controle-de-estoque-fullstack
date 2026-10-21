@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;420;480;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=2.0">
+  <link rel="stylesheet" href="css/style.css?v=2.1">
 </head>
 <body>
 
@@ -38,14 +38,6 @@
         <span id="api-status-badge" class="badge-status badge-connecting">
           <span class="status-dot"></span> Conectando...
         </span>
-        <button 
-          id="btn-abrir-novo-produto" 
-          class="btn-primary" 
-          type="button" 
-          onclick="abrirModal('modal-novo-produto')"
-        >
-          <span class="btn-icon">+</span> Novo Produto
-        </button>
       </div>
     </div>
   </header>
@@ -101,6 +93,14 @@
       -->
       <section class="ledger-toolbar">
         <div class="toolbar-filter-group">
+          <button 
+          id="btn-abrir-novo-produto" 
+          class="btn-primary" 
+          type="button" 
+          onclick="abrirModal('modal-novo-produto')"
+        >
+          <span class="btn-icon">+</span> Novo Produto
+          </button>
           <div class="segmented-control">
             <button id="tab-todos" class="tab-pill active" type="button" onclick="definirFiltro('todos')">
               Todos os itens
@@ -286,10 +286,33 @@
     </div>
   </div>
 
+  <!-- Modal: Confirmar Exclusão de Produto (Card de Confirmação HTML) -->
+  <div id="modal-confirmar-exclusao" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirmar Exclusão</h3>
+        <button class="modal-close" type="button" onclick="fecharModal('modal-confirmar-exclusao')">✕</button>
+      </div>
+      <input type="hidden" id="exclusao-produto-id">
+      <div class="product-highlight-box highlight-danger">
+        <span class="highlight-label label-danger">Atenção</span>
+        <strong id="exclusao-produto-nome" class="highlight-name">--</strong>
+        <span class="highlight-info">Esta ação removerá o produto definitivamente do catálogo.</span>
+      </div>
+      <p class="modal-message-danger">
+        Deseja realmente excluir este produto? Esta operação não poderá ser desfeita.
+      </p>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="fecharModal('modal-confirmar-exclusao')">Cancelar</button>
+        <button type="button" id="btn-confirmar-exclusao" class="btn-danger" onclick="executarExclusao()">Sim, excluir produto</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Flutuante -->
   <div id="toast" class="mercury-toast"></div>
 
   <!-- Script Principal da Aplicação -->
-  <script src="js/app.js?v=2.0"></script>
+  <script src="js/app.js?v=2.1"></script>
 </body>
 </html>

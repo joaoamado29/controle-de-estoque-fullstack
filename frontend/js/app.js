@@ -278,7 +278,7 @@ function renderizarTabela() {
   corpoTabela.innerHTML = listaFiltrada.map(produto => {
     const isEstoqueBaixo = produto.quantidade < 5;
     const classeBadge = isEstoqueBaixo ? "stock-badge stock-low" : "stock-badge stock-normal";
-    const textoBadge = isEstoqueBaixo ? `⚠️ ${produto.quantidade} un. (Baixo)` : `${produto.quantidade} un.`;
+    const textoBadge = isEstoqueBaixo ? `${produto.quantidade} un.  ⚠️  ` : `${produto.quantidade} un.`;
     const valorTotalItem = produto.preco * produto.quantidade;
 
     return `
@@ -296,7 +296,7 @@ function renderizarTabela() {
               title="Adicionar unidades ao estoque"
               onclick="abrirModalEntrada(${produto.id})"
             >
-              + Entrada
+              Entrada
             </button>
             <button 
               type="button" 
@@ -304,7 +304,7 @@ function renderizarTabela() {
               title="Registrar venda/saída deste produto"
               onclick="abrirModalVenda(${produto.id})"
             >
-              - Venda
+              Venda
             </button>
             <button 
               type="button" 
@@ -537,11 +537,39 @@ async function submeterVendaEstoque(event) {
 
 /**
  * O que esta função faz?
- * Solicita confirmação e envia uma requisição DELETE para excluir o produto.
+ * Abre o card modal em HTML para confirmação antes de excluir o produto.
+ * 
+ * Por que foi feito assim?
+ * Substitui o confirm() nativo do navegador por um card estilizado no padrão Mercury,
+ * proporcionando uma experiência visual consistente, segura e adaptada para mobile.
  */
-async function confirmarExclusao(produtoId, nome) {
-  const confirmou = confirm(`Deseja realmente excluir o produto "${nome}"?\nEsta ação não poderá ser desfeita.`);
-  if (!confirmou) return;
+function confirmarExclusao(produtoId, nome) {
+  const produto = produtosCache.find(p => p.id === produtoId);
+  const nomeProduto = produto ? produto.nome : nome;
+
+  const inputId = document.getElementById("exclusao-produto-id");
+  const elementoNome = document.getElementById("exclusao-produto-nome");
+
+  if (inputId) inputId.value = produtoId;
+  if (elementoNome) elementoNome.textContent = nomeProduto;
+
+  abrirModal("modal-confirmar-exclusao");
+}
+
+/**
+ * O que esta função faz?
+ * Executa a exclusão definitiva do produto via requisição DELETE após a confirmação no card HTML.
+ * 
+ * Por que foi feito assim?
+ * Separa a etapa de confirmação visual do usuário da execução assíncrona com a API.
+ */
+async function executarExclusao() {
+  const inputId = document.getElementById("exclusao-produto-id");
+  const produtoId = inputId ? inputId.value : null;
+  const elementoNome = document.getElementById("exclusao-produto-nome");
+  const nome = elementoNome ? elementoNome.textContent : "Item";
+
+  if (!produtoId) return;
 
   try {
     const resposta = await fetch(`${API_BASE}/${produtoId}`, {
@@ -553,9 +581,11 @@ async function confirmarExclusao(produtoId, nome) {
       throw new Error(erro.detail || "Erro ao excluir produto.");
     }
 
+    fecharModal("modal-confirmar-exclusao");
     mostrarToast(`Produto "${nome}" excluído com sucesso.`);
     await carregarDados();
   } catch (error) {
+    fecharModal("modal-confirmar-exclusao");
     mostrarToast(error.message, true);
   }
 }

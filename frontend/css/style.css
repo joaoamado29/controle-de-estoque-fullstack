@@ -349,12 +349,27 @@ body {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.ledger-card::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ledger-card::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+}
+
+.ledger-card::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
 }
 
 .mercury-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -399,16 +414,21 @@ body {
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 480;
+
 }
 
 .stock-normal {
   background-color: var(--color-lavender);
   color: var(--color-ink);
+  min-width: 50px;
+
 }
 
 .stock-low {
   background-color: var(--color-warning-bg);
   color: var(--color-warning);
+  min-width: 78px;
+
 }
 
 /* Botões de Ação na Tabela (Pills Translúcidas) */
@@ -606,6 +626,50 @@ body {
   color: var(--color-ink);
 }
 
+/* Botão de Ação Destrutiva (Mercury Red Pill) */
+.btn-danger {
+  background-color: var(--color-danger);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-pill);
+  height: 40px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 480;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-danger:hover {
+  background-color: #d13438;
+}
+
+.btn-danger:active {
+  transform: scale(0.98);
+}
+
+/* Destaque de Alerta Destrutivo no Modal */
+.highlight-danger {
+  background-color: var(--color-danger-bg) !important;
+  border-left: 3px solid var(--color-danger);
+}
+
+.label-danger {
+  color: var(--color-danger) !important;
+  font-weight: 500;
+}
+
+.modal-message-danger {
+  font-size: 14px;
+  color: var(--color-ink-secondary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
 /* Notificação Toast Flutuante */
 .mercury-toast {
   position: fixed;
@@ -650,23 +714,174 @@ body {
   text-align: center;
 }
 
-/* Responsividade para Telas Menores */
+/* 
+ * Responsividade Mercury para Dispositivos Móveis & Tablets
+ * O que faz: Adapta todo o layout, métricas, toolbar, tabela e modais para telas touch.
+ * Por que assim: Garante ergonomia touch (alvos de toque >= 44px), previne zoom
+ * automático em inputs no iOS e mantém legibilidade impecável sem quebras.
+ */
 @media (max-width: 768px) {
+  .mercury-main {
+    padding: 24px 0 48px 0;
+  }
+
+  .content-container {
+    padding: 0 20px;
+  }
+
+  .console-hero {
+    margin-bottom: 24px;
+  }
+
   .console-card {
     flex-direction: column;
   }
+
+  .console-metric {
+    padding: 22px 24px;
+  }
+
   .console-divider {
     width: 100%;
     height: 1px;
   }
-  .form-row {
-    grid-template-columns: 1fr;
+
+  .metric-value {
+    font-size: 32px;
   }
+
   .ledger-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 14px;
   }
+
+  .toolbar-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  #btn-abrir-novo-produto {
+    width: 100%;
+    height: 44px;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .segmented-control {
+    display: flex;
+    width: 100%;
+  }
+
+  .segmented-control .tab-pill {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .toolbar-search-group {
+    width: 100%;
+  }
+
   .search-capsule {
     min-width: 100%;
+    width: 100%;
+  }
+
+  .search-capsule input {
+    height: 44px;
+    font-size: 16px; /* Evita zoom automático no iOS Safari */
+  }
+
+  /* Modais Adaptativos */
+  .modal-card {
+    width: calc(100% - 32px);
+    max-width: 440px;
+    padding: 24px 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .form-group input {
+    height: 44px;
+    font-size: 16px; /* Previne auto-zoom no iOS Safari */
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .modal-footer .btn-primary,
+  .modal-footer .btn-secondary,
+  .modal-footer .btn-danger {
+    width: 100%;
+    height: 44px;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  /* Toasts Flutuantes em Telas Menores */
+  .mercury-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-width: calc(100% - 32px);
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* Telas Compactas (Smartphones <= 480px) */
+@media (max-width: 480px) {
+  .mercury-navbar {
+    height: 60px;
+  }
+
+  .navbar-container {
+    padding: 0 16px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  .brand-subtitle {
+    display: none; /* Simplifica o topo em telas muito estreitas */
+  }
+
+  .badge-status {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  .content-container {
+    padding: 0 14px;
+  }
+
+  .console-metric {
+    padding: 16px 18px;
+  }
+
+  .metric-value {
+    font-size: 26px;
+  }
+
+  .mercury-table thead th,
+  .mercury-table tbody td {
+    padding: 14px 16px;
+  }
+
+  .footer-container {
+    padding: 0 16px;
+    font-size: 12px;
   }
 }
