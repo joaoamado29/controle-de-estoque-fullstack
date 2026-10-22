@@ -9,12 +9,20 @@ Por que foi feito assim?
 Centralizar a inicialização da API em um único arquivo facilita a execução
 do servidor ASGI (uvicorn) e o compartilhamento da instância do app nos testes.
 """
+import logging
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.database import get_db
 from backend.routers.produto_router import router as produto_router
+
+logger = logging.getLogger("backend.main")
 
 app = FastAPI(
     title="Stoky - Sistema de Gestão de Estoque",
@@ -31,17 +39,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(OperationalError)
+async def operational_error_handler(request: Request, exc: OperationalError) -> JSONResponse:
+    """
+    O que faz: Captura falhas de conexão operacional com o banco de dados (ex: PostgreSQL fora do ar).
+    Por que assim: Evita que a aplicação gere erro 500 sem tratamento e informa ao cliente o status 503 com mensagem clara.
+    """
+    logger.error(f"Erro operacional no banco de dados na rota {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"detail": f"Erro de conexão com o banco de dados: {str(exc)}"},
+    )
+
+
 # Registra as rotas da API com o prefixo /api
 app.include_router(produto_router, prefix="/api")
 
 
 @app.get("/health", tags=["Healthcheck"])
-async def healthcheck() -> dict[str, str]:
+async def healthcheck(db: AsyncSession = Depends(get_db)) -> JSONResponse:
     """
-    O que faz: Retorna o status de saúde da aplicação.
-    Por que assim: Útil para checar se a API está no ar em monitoramentos ou contêineres.
+    O que faz: Retorna o status de saúde da aplicação e da conectividade com o banco de dados.
+    Por que assim: Testa a conectividade real executando um ping simples no banco (SELECT 1),
+    garantindo que monitoramentos recebam 503 caso o banco esteja indisponível.
     """
-    return {"status": "ok"}
+    try:
+        await db.execute(text("SELECT 1"))
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "ok", "database": "connected"},
+        )
+    except Exception as exc:
+        logger.error(f"Falha de saúde na conexão com o banco de dados: {exc}")
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "degraded",
+                "database": "offline",
+                "detail": f"Falha de conexão com o banco de dados: {str(exc)}",
+            },
+        )
 
 
 # O que este bloco faz?

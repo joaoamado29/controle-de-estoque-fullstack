@@ -1,8 +1,10 @@
 """
 Testes de integração das rotas de Produtos (FastAPI endpoints).
 """
+from unittest.mock import AsyncMock
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.exc import OperationalError
 
 
 @pytest.mark.asyncio
@@ -146,12 +148,72 @@ async def test_deletar_produto(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_healthcheck_endpoint(client: AsyncClient):
     """
-    O que faz: Testa se o endpoint /health responde corretamente com status ok.
-    Por que assim: Garante que os serviços de monitoramento consigam checar a saúde da API.
+    O que faz: Testa se o endpoint /health responde com status 200 e confirma o banco conectado.
+    Por que assim: Garante que os serviços de monitoramento saibam que a API e o banco estão operacionais.
     """
     response = await client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["database"] == "connected"
+
+
+@pytest.mark.asyncio
+async def test_healthcheck_com_falha_no_banco_retorna_503(client: AsyncClient):
+    """
+    O que faz: Testa se o healthcheck retorna 503 quando a conexão com o banco de dados falha.
+    Por que assim: Impede que a API informe 'Online' falsamente quando o banco estiver pausado ou fora do ar.
+    """
+    from backend.main import app
+    from backend.database import get_db
+
+    async def override_db_com_erro():
+        mock_session = AsyncMock()
+        mock_session.execute.side_effect = OperationalError("connection to server lost", params=None, orig=Exception("docker paused"))
+        yield mock_session
+
+    app.dependency_overrides[get_db] = override_db_com_erro
+    try:
+        response = await client.get("/health")
+        assert response.status_code == 503
+        data = response.json()
+        assert data["status"] == "degraded"
+        assert data["database"] == "offline"
+        assert "Falha de conexão com o banco de dados" in data["detail"]
+    finally:
+        from tests.conftest import async_session_test
+        async def override_get_db():
+            async with async_session_test() as session:
+                yield session
+        app.dependency_overrides[get_db] = override_get_db
+
+
+@pytest.mark.asyncio
+async def test_erro_conexao_banco_na_api_retorna_503(client: AsyncClient):
+    """
+    O que faz: Testa se requisições à API retornam 503 com mensagem clara quando ocorre falha no banco.
+    Por que assim: Garante tratamento uniforme e sem travamento da aplicação quando o PostgreSQL falhar.
+    """
+    from backend.main import app
+    from backend.database import get_db
+
+    async def override_db_com_erro():
+        mock_session = AsyncMock()
+        mock_session.execute.side_effect = OperationalError("connection refused", params=None, orig=Exception("docker paused"))
+        yield mock_session
+
+    app.dependency_overrides[get_db] = override_db_com_erro
+    try:
+        response = await client.get("/api/produtos/")
+        assert response.status_code == 503
+        data = response.json()
+        assert "Erro de conexão com o banco de dados" in data["detail"]
+    finally:
+        from tests.conftest import async_session_test
+        async def override_get_db():
+            async with async_session_test() as session:
+                yield session
+        app.dependency_overrides[get_db] = override_get_db
 
 
 @pytest.mark.asyncio

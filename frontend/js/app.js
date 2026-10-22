@@ -132,11 +132,14 @@ function configurarOuvintes() {
 
 /**
  * O que esta função faz?
- * Checa a saúde da API (healthcheck) e atualiza o indicador visual no cabeçalho.
+ * Checa a saúde da API e a conectividade com o banco de dados (healthcheck),
+ * atualizando o selo indicador de status (badge) no cabeçalho.
  * 
  * Por que foi feito assim?
- * Dá clareza imediata ao usuário sobre o status do servidor, evitando confusão
- * se o backend não estiver rodando no momento do teste.
+ * Informa imediatamente ao usuário não apenas se a API FastAPI está no ar,
+ * mas também se o banco de dados PostgreSQL está respondendo normalmente.
+ * Se o banco estiver fora ou com status 503, o indicador sinaliza que o sistema
+ * está em modo degradado/offline.
  */
 async function verificarConexaoAPI() {
   const badge = document.getElementById("api-status-badge");
@@ -145,8 +148,17 @@ async function verificarConexaoAPI() {
   try {
     const res = await fetch(HEALTH_URL);
     if (res.ok) {
-      badge.className = "badge-status badge-online";
-      badge.innerHTML = '<span class="status-dot"></span> API Online (FastAPI)';
+      const data = await res.json();
+      if (data.database === "connected") {
+        badge.className = "badge-status badge-online";
+        badge.innerHTML = '<span class="status-dot"></span> Online (API + Banco)';
+      } else {
+        badge.className = "badge-status badge-offline";
+        badge.innerHTML = '<span class="status-dot"></span> Banco Indisponível';
+      }
+    } else if (res.status === 503) {
+      badge.className = "badge-status badge-offline";
+      badge.innerHTML = '<span class="status-dot"></span> Banco Offline (503)';
     } else {
       throw new Error();
     }
