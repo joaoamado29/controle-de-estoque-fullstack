@@ -7,7 +7,31 @@
 ![Pytest](https://img.shields.io/badge/Tests-17%20Passed-success?logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-> **Stoky** é um sistema completo e profissional para controle de inventário, cálculo patrimonial e movimentações de produtos em tempo real. Desenvolvido com **FastAPI**, **SQLAlchemy 2.0 (Async)**, **PostgreSQL**, **Alembic** e frontend moderno inspirado no **Mercury Design System**.
+---
+
+## 1 - Qual caso de borda você considerou que mais pode dar problema, e como tratou?
+
+1.	Sobrecargas de pacotes que poderiam causar instabilidade no sistema, causada por envios de caracteres ilimitados. Tratei isto limitando a quantidade de caracteres que podem ser definitos no frontend e que podem ser recebidos no backend. Ficando 100 caracteres para o nome, o preço sendo 10 dígitos e a quantidade sendo limitado a 7 dígitos.
+
+---
+## 2 - Se duas vendas acontecerem ao mesmo tempo no mesmo produto, o que pode dar errado?
+
+2.	Perda de dados por sobrescrita
+Acontece quando duas requisições leem o valor antes que qualquer uma delas salve o resultado. Exemplo: existem 10 teclados no estoque. Chegam duas vendas ao mesmo tempo: uma de 4 unidades e outra de 5.
+  Formato certo: A primeira vende 4 (sobra 6) e a segunda vende 5 sobre o novo total (sobra 1).
+  Formato errado: As duas leem o total de 10 ao mesmo tempo. A primeira calcula 10 - 4 = 6 e salva. Um milissegundo depois, a segunda calcula 10 - 5 = 5 e salva por cima. O estoque final fica em 5, e a primeira venda é ignorada.
+
+---
+
+## 3 - O que você faria diferente se o sistema precisasse atender 100 lojas?
+
+3.	Neste caso, posso supor duas soluções em casos diferentes. 
+
+  Se fosse 1 estoque para distribuir em 100 lojas diferentes (um Centro de Distribuição): 
+  Permissões divididas por cargos (gerente/coordenador pode dar entrada e vender) e adicionaria um filtro para visualizar o estoque de cada loja para melhor controle.
+
+  Se 100 lojas diferentes fosse usar o mesmo sistema com estoque diferente: Cada loja teria um banco de dados separado, login e senha para cada loja e funcionalidade adicionais especificas para atender o tipo de comércio especifico.
+
 
 ---
 
