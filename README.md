@@ -147,7 +147,7 @@ Para rodar o projeto localmente, certifique-se de possuir instalado:
 
 ```bash
 # Clone o repositório ou acesse a pasta raiz
-cd desafio
+cd controle-de-estoque-fullstack
 
 # Crie o ambiente virtual
 python -m venv venv
